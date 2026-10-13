@@ -79,9 +79,18 @@ export default async function handler(req) {
   }
 
   // build the upstream path
-  // request URL: https://<vercel>/api/gemini/<rest>
+  // Vercel rewrites /api/gemini/:path* -> /api/gemini and adds ?path=<captured>
+  // to the destination URL. We read both the URL pathname and the `path` query
+  // param (whichever is non-empty) to recover the upstream Gemini API path.
   const url = new URL(req.url);
-  const upstreamPath = url.pathname.replace(/^\/api\/gemini/, "") || "/v1beta/models";
+  let upstreamPath = url.pathname.replace(/^\/api\/gemini/, "");
+  if (!upstreamPath) {
+    // rewrite captured path as ?path=<value> — use that instead
+    const captured = url.searchParams.get("path");
+    upstreamPath = captured ? "/" + captured.replace(/^\/+/, "") : "/v1beta/models";
+  }
+  // never forward Vercel's internal `path` query param to Gemini
+  url.searchParams.delete("path");
   const upstreamUrl = GOOGLE_AI_BASE + upstreamPath + (url.search || "");
 
   // forward
