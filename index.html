@@ -1482,6 +1482,8 @@ window.FREETV_CHANNELS=window.FREETV_CHANNELS||{};window.FREETV_CHANNELS["zw"]=[
       let retried = false;
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         setStatus("");
+        // the stream parsed — hide any retry/error fallback that may have shown
+        clearFallback();
         // try autoplay muted first (browser policy), then unmute if it works
         video.muted = true;
         video.play().then(() => {
