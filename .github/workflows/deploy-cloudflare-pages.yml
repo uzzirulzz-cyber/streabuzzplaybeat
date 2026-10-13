@@ -1,0 +1,31 @@
+name: Publish PlayBeat TV to Cloudflare Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: playbeattv-fresh
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble static website (no R2 or build)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp index.html dist/index.html
+          if [ -d embeds ]; then cp -R embeds dist/embeds; fi
+          if [ -d public ]; then cp -R public/. dist/; fi
+          test -s dist/index.html
+          echo '/* /index.html 200' > dist/_redirects
+      - name: Publish new independent Pages site
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=playbeattv-fresh --branch=main
