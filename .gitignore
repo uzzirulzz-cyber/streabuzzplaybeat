@@ -1,0 +1,26 @@
+# dependencies (none — static site, no build step)
+node_modules/
+
+# env / secrets — never commit
+.env
+.env.local
+.env.*.local
+.vercel/
+.wrangler/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# logs
+*.log
+npm-debug.log*
+
+# the original AI Studio export bundle — drop your real one in
+# embeds/studio/.gitkeep would go here if needed
