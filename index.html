@@ -31,6 +31,9 @@ a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
 button{font:inherit}
 img{display:block}
+/* Defensive: components using display:grid/flex would otherwise override the
+   [hidden] attribute's UA default of display:none, leaking hidden elements. */
+[hidden]{display:none !important}
 .muted{color:var(--muted)} .small{font-size:12.5px}
 .skip-link{position:absolute;left:-9999px;top:0;background:var(--accent);color:#fff;padding:8px 14px;border-radius:0 0 8px 0;z-index:99}
 .skip-link:focus{left:0}
