@@ -1,0 +1,55 @@
+name = "playbeattv-buzz"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+account_id = "1f230ccf421d89de0f68562da95f005d"
+
+# Bindings — set the database + bucket names to match your account.
+# Create the D1 db first:  wrangler d1 create playbeattv-buzz
+# Create the R2 bucket:    wrangler r2 bucket create playbeattv-buzz
+# Then run the schema + seed:
+#   wrangler d1 execute playbeattv-buzz --file=./sql/schema.sql
+#   wrangler d1 execute playbeattv-buzz --file=./sql/seed.sql
+
+[[d1_databases]]
+binding = "DB"
+database_name = "playbeattv-buzz"
+database_id = "REPLACE_WITH_D1_UUID"  # filled in by `wrangler d1 create`
+
+[[r2_buckets]]
+binding = "ASSETS"
+bucket_name = "playbeattv-buzz"
+
+# Scheduled trigger — every 5 minutes, run stream health checks.
+[triggers]
+crons = ["*/5 * * * *"]
+
+# Custom routes — the same Worker answers all three subdomains.
+# These are wired up automatically once the playbeattv.buzz zone is
+# added to Cloudflare and the DNS records below are created.
+[[routes]]
+pattern = "api.playbeattv.buzz/*"
+zone_name = "playbeattv.buzz"
+custom_domain = true
+
+[[routes]]
+pattern = "stream.playbeattv.buzz/*"
+zone_name = "playbeattv.buzz"
+custom_domain = true
+
+[[routes]]
+pattern = "assets.playbeattv.buzz/*"
+zone_name = "playbeattv.buzz"
+custom_domain = true
+
+# Secrets (set with `wrangler secret put STREAM_TOKEN`).
+# The storefront doesn't currently send a bearer token, so leave this
+# unset to keep the proxy open. Setting it requires updating the
+# storefront's hls.js loader to inject the Authorization header.
+
+# Worker size — small/medium is plenty for this volume.
+[limits]
+cpu_ms = 100
+
+# Observability — gives you logs in the Cloudflare dashboard.
+[observability]
+enabled = true

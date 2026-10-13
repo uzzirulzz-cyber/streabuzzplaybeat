@@ -1,0 +1,19 @@
+{
+  "name": "playbeattv-buzz-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "db:init": "wrangler d1 execute playbeattv-buzz --file=./sql/schema.sql && wrangler d1 execute playbeattv-buzz --file=./sql/seed.sql",
+    "db:query": "wrangler d1 execute playbeattv-buzz --command",
+    "db:shell": "wrangler d1 execute playbeattv-buzz --command \"SELECT name FROM sqlite_master WHERE type='table'\""
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20251001.0",
+    "typescript": "^5.6.0",
+    "wrangler": "^4.0.0"
+  }
+}

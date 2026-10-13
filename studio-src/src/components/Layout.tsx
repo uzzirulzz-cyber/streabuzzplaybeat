@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState, type ReactNode } from 'react';
-import { LayoutDashboard, Tv, Film, Layers as SeriesIcon, Music, Shield, Search, Heart, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Tv, Film, Layers as SeriesIcon, Music, Shield, Search, Heart, Menu, X, Activity } from 'lucide-react';
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -10,6 +10,7 @@ const NAV = [
   { to: '/music', label: 'Music', icon: Music },
   { to: '/favorites', label: 'Favorites', icon: Heart },
   { to: '/admin', label: 'Admin', icon: Shield },
+  { to: '/monitoring', label: 'Monitoring', icon: Activity },
 ];
 
 export default function Layout({ children }: { children: ReactNode }) {

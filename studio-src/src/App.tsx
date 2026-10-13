@@ -9,6 +9,7 @@ import { SeriesList, SeriesDetail } from './pages/Series';
 import MusicPage from './pages/MusicPage';
 import Favorites from './pages/Favorites';
 import Admin from './pages/Admin';
+import Monitoring from './pages/Monitoring';
 import MusicPlayer from './components/MusicPlayer';
 import { AppProvider } from './hooks/store';
 
@@ -42,6 +43,7 @@ export default function App() {
             <Route path="/music" element={<MusicPage onPlayTrack={onPlayTrack} />} />
             <Route path="/favorites" element={<Favorites onPlayTrack={onPlayTrack} />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/monitoring" element={<Monitoring />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Layout>

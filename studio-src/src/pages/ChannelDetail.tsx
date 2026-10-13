@@ -53,9 +53,13 @@ export default function ChannelDetail() {
 
       <div className="overflow-hidden rounded-2xl border border-slate-800 bg-black">
         <VideoPlayer
-          src={channel.streamUrl}
+          sources={[
+            { url: channel.streamUrl, label: 'primary' },
+            ...(channel.backupUrl ? [{ url: channel.backupUrl, label: 'backup' }] : []),
+          ]}
           title={channel.name}
           autoPlay
+          preflight
           onProgress={(t) => recordPlay({ id: channel.id, kind: 'channel', title: channel.name }, t)}
         />
       </div>

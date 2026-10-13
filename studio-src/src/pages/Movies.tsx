@@ -78,7 +78,14 @@ export function MovieDetail() {
       </div>
 
       <div className="mt-8 overflow-hidden rounded-2xl border border-slate-800 bg-black">
-        <VideoPlayer src={movie.videoUrl} title={movie.title} onProgress={(t) => recordPlay({ id: movie.id, kind: 'movie', title: movie.title }, t)} />
+        <VideoPlayer
+          sources={[
+            { url: movie.videoUrl, label: 'primary' },
+            ...(movie.backupUrl ? [{ url: movie.backupUrl, label: 'backup' }] : []),
+          ]}
+          title={movie.title}
+          onProgress={(t) => recordPlay({ id: movie.id, kind: 'movie', title: movie.title }, t)}
+        />
       </div>
 
       <section className="mt-10">

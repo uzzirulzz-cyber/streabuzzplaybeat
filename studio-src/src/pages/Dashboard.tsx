@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Sparkles, Play, ChevronRight, Film, Tv, Layers as SeriesIcon, Music as MusicIcon } from 'lucide-react';
-import { MOVIES, SERIES, CHANNELS, MUSIC, getFeatured } from '../data/catalog';
+import { MOVIES, SERIES, CHANNELS, MUSIC, getFeatured, getTrending } from '../data/catalog';
 import { MovieCard, SeriesCard, ChannelCard, MusicCard, ContentRow } from '../components/Cards';
 import { getAIRecommendations, pingGemini, type AIRecommendation } from '../lib/gemini';
 import { useApp } from '../hooks/store';
@@ -12,6 +12,7 @@ type MusicStateProps = { onPlayTrack: (id: string) => void };
 export default function Dashboard({ onPlayTrack }: MusicStateProps) {
   const { state, recordPlay } = useApp();
   const featured = getFeatured();
+  const trending = getTrending();
   const hero = featured.movies[0] || MOVIES[0];
 
   const [aiPicks, setAiPicks] = useState<AIRecommendation[]>([]);
@@ -122,6 +123,28 @@ export default function Dashboard({ onPlayTrack }: MusicStateProps) {
           </div>
         )}
       </section>
+
+      {/* Trending rail — refreshed daily by the scheduled Worker in production */}
+      {(trending.movies.length > 0 || trending.series.length > 0 || trending.channels.length > 0 || trending.tracks.length > 0) && (
+        <section className="mb-10">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-400">
+              🔥 Hot
+            </span>
+            <h2 className="font-['Outfit'] text-lg font-bold">Trending now</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {trending.movies.map(m => <MovieCard key={`t-mv-${m.id}`} movie={m} />)}
+            {trending.series.map(s => <SeriesCard key={`t-sr-${s.id}`} series={s} />)}
+            {trending.tracks.map(t => <MusicCard key={`t-tr-${t.id}`} track={t} onPlay={onPlayTrack} />)}
+            {trending.channels.slice(0, 4).map(c => (
+              <div key={`t-ch-${c.id}`} className="col-span-2 sm:col-span-1">
+                <ChannelCard channel={c} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <ContentRow title="Featured Movies" items={featured.movies}
         render={(m: Movie) => <MovieCard movie={m} />} />

@@ -242,6 +242,8 @@ body.no-scroll{overflow:hidden}
           <li><a href="#/movies"><span class="nav-name">Movies</span></a></li>
           <li><a href="#/music"><span class="nav-name">Music</span></a></li>
           <li><a href="#/app/studio"><span class="nav-name">PlayBeat Studio</span> <span class="badge ftv">AI</span></a></li>
+          <li><a href="#/app/premium"><span class="nav-name">PlayBeatTV.buzz Premium</span> <span class="badge ftv">NEW</span></a></li>
+          <li><a href="#/admin/monitoring"><span class="nav-name">Monitoring</span></a></li>
         </ul>
       </section>
       <section class="about">
@@ -960,6 +962,8 @@ window.FREETV_CHANNELS=window.FREETV_CHANNELS||{};window.FREETV_CHANNELS["zw"]=[
     const head = h.split("/")[0];
     const arg = decodeURIComponent(h.slice(head.length + 1));
     if (head === "app" && arg) return { kind: "embed", slug: arg };
+    // /admin/<slug>  →  embed view with the matching slug (e.g. monitoring)
+    if (head === "admin" && arg) return { kind: "embed", slug: arg };
     if (CATEGORY_VIEWS && CATEGORY_VIEWS[head]) return { kind: "category", slug: head };
     if (head === "c" && arg) return { kind: "country", code: arg.toLowerCase() };
     if (head === "k" && arg) return { kind: "list", key: arg };
@@ -1625,6 +1629,22 @@ window.FREETV_CHANNELS=window.FREETV_CHANNELS||{};window.FREETV_CHANNELS["zw"]=[
       fallback: "https://ai.studio/apps/5d188f2a-5162-4288-a32e-990a76df807a",
       note: "Studio app is a model-generated AI Studio export. If the embedded view stays blank, " +
             "the host page is sending frame-blocking headers — use \"Open in new tab\".",
+    },
+    premium: {
+      // Premium interface = same Studio bundle, just routed via /app/premium
+      // so the URL reads "premium" and analytics can distinguish visits.
+      title: "PlayBeatTV.buzz — Premium",
+      src: "embeds/studio/index.html#/",
+      fallback: "https://streabuzzplaybeat.vercel.app/#/app/studio",
+      note: "Premium interface for PlayBeatTV.buzz — movies, series, music videos, " +
+            "trending, Continue Watching, cross-platform monitoring.",
+    },
+    monitoring: {
+      // Direct monitoring dashboard — loads the Studio bundle's /monitoring route.
+      title: "Monitoring · PlayBeat.live · MagXTV.click · PlayBeatTV.buzz",
+      src: "embeds/studio/index.html#/monitoring",
+      fallback: "",
+      note: "Centralized cross-platform health dashboard.",
     },
   };
 

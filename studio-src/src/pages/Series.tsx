@@ -82,7 +82,15 @@ export function SeriesDetail() {
 
       {playingEpisode && (
         <div className="mt-8 overflow-hidden rounded-2xl border border-slate-800 bg-black">
-          <VideoPlayer src={playingEpisode.videoUrl} title={`${series.title} — E${playingEpisode.number}`} autoPlay />
+          <VideoPlayer
+            sources={[
+              { url: playingEpisode.videoUrl, label: 'primary' },
+              ...(playingEpisode.backupUrl ? [{ url: playingEpisode.backupUrl, label: 'backup' }] : []),
+              ...(series.backupUrl ? [{ url: series.backupUrl, label: 'series backup' }] : []),
+            ]}
+            title={`${series.title} — E${playingEpisode.number}`}
+            autoPlay
+          />
         </div>
       )}
 

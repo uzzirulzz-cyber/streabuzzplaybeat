@@ -10,8 +10,11 @@ export type Channel = {
   language: string;
   logo?: string;
   streamUrl: string;
+  /** Backup source — VideoPlayer fails over to this on primary failure. */
+  backupUrl?: string;
   description: string;
   featured?: boolean;
+  trending?: boolean;
 };
 
 export type Movie = {
@@ -24,7 +27,10 @@ export type Movie = {
   poster: string; // gradient classes for placeholder
   description: string;
   videoUrl: string;
+  /** Backup source for failover. */
+  backupUrl?: string;
   featured?: boolean;
+  trending?: boolean;
 };
 
 export type Episode = {
@@ -34,6 +40,7 @@ export type Episode = {
   duration: number;
   description: string;
   videoUrl: string;
+  backupUrl?: string;
 };
 
 export type Series = {
@@ -46,7 +53,10 @@ export type Series = {
   poster: string;
   description: string;
   episodes: Episode[];
+  /** Backup stream for the series (used on the detail page). */
+  backupUrl?: string;
   featured?: boolean;
+  trending?: boolean;
 };
 
 export type Track = {
@@ -57,6 +67,7 @@ export type Track = {
   duration: number; // seconds
   cover: string; // gradient
   audioUrl: string;
+  trending?: boolean;
 };
 
 // 8 demo live channels — all stream URLs are public test streams
@@ -68,8 +79,10 @@ export const CHANNELS: Channel[] = [
     country: 'US',
     language: 'English',
     streamUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+    backupUrl: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/master.m3u8',
     description: '24/7 animated demo loop powered by the Mux test stream.',
     featured: true,
+    trending: true,
   },
   {
     id: 'ch-2',
@@ -78,8 +91,10 @@ export const CHANNELS: Channel[] = [
     country: 'NL',
     language: 'English',
     streamUrl: 'https://test-streams.mux.dev/test_001/stream.m3u8',
+    backupUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
     description: 'Blender sci-fi short on a continuous loop.',
     featured: true,
+    trending: true,
   },
   {
     id: 'ch-3',
@@ -88,7 +103,9 @@ export const CHANNELS: Channel[] = [
     country: 'US',
     language: 'English',
     streamUrl: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/master.m3u8',
+    backupUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
     description: 'Apple\'s bipbop advanced demo stream — HLS reference.',
+    trending: true,
   },
   {
     id: 'ch-4',
@@ -149,7 +166,9 @@ export const MOVIES: Movie[] = [
     poster: 'from-orange-500 via-amber-600 to-red-700',
     description: 'A giant rabbit with a heart bigger than himself takes revenge on three rodents who killed his butterfly friends.',
     videoUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+    backupUrl: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/master.m3u8',
     featured: true,
+    trending: true,
   },
   {
     id: 'mv-2',
@@ -161,7 +180,9 @@ export const MOVIES: Movie[] = [
     poster: 'from-cyan-600 via-blue-700 to-indigo-900',
     description: 'In an apocalyptic future, a group of warriors and scientists must save the world from an invasion of ruthless robots.',
     videoUrl: 'https://test-streams.mux.dev/test_001/stream.m3u8',
+    backupUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
     featured: true,
+    trending: true,
   },
   {
     id: 'mv-3',
@@ -173,6 +194,8 @@ export const MOVIES: Movie[] = [
     poster: 'from-purple-700 via-violet-800 to-fuchsia-900',
     description: 'A lonely young woman searches for the baby dragon she once rescued, only to discover the cost of her obsession.',
     videoUrl: 'https://test-streams.mux.dev/test_001/stream.m3u8',
+    backupUrl: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/master.m3u8',
+    trending: true,
   },
   {
     id: 'mv-4',
@@ -221,6 +244,7 @@ export const SERIES: Series[] = [
     poster: 'from-indigo-700 via-purple-800 to-pink-900',
     description: 'A curated anthology of Blender open movies, each episode a complete short film.',
     featured: true,
+    trending: true,
     episodes: [
       { id: 'sr-1-e1', number: 1, title: 'Big Buck Bunny', duration: 10, description: 'The bunny meets the rodents.', videoUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
       { id: 'sr-1-e2', number: 2, title: 'Elephants Dream', duration: 10, description: 'Two characters explore a mechanical wonder.', videoUrl: 'https://test-streams.mux.dev/test_001/stream.m3u8' },
@@ -267,6 +291,7 @@ export const SERIES: Series[] = [
     poster: 'from-amber-600 via-orange-700 to-red-900',
     description: 'A meditation series on cities at their quietest hours.',
     featured: true,
+    trending: true,
     episodes: [
       { id: 'sr-4-e1', number: 1, title: 'Tokyo, 4 AM', duration: 18, description: 'The world\'s largest city at its emptiest.', videoUrl: 'https://test-streams.mux.dev/test_001/stream.m3u8' },
       { id: 'sr-4-e2', number: 2, title: 'New York, 3 AM', duration: 16, description: 'The city that sleeps, briefly.', videoUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
@@ -277,10 +302,10 @@ export const SERIES: Series[] = [
 
 // 6 demo music tracks — public-domain or CC0 audio
 export const MUSIC: Track[] = [
-  { id: 'tr-1', title: 'Mind Relaxing Piano', artist: 'Mild Manors', album: 'Studio Loops', duration: 168, cover: 'from-violet-600 to-fuchsia-800', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-  { id: 'tr-2', title: 'Afternoon Drive', artist: 'Heliograph', album: 'Routes', duration: 296, cover: 'from-amber-500 to-orange-700', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
+  { id: 'tr-1', title: 'Mind Relaxing Piano', artist: 'Mild Manors', album: 'Studio Loops', duration: 168, cover: 'from-violet-600 to-fuchsia-800', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', trending: true },
+  { id: 'tr-2', title: 'Afternoon Drive', artist: 'Heliograph', album: 'Routes', duration: 296, cover: 'from-amber-500 to-orange-700', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', trending: true },
   { id: 'tr-3', title: 'Late Night Loop', artist: 'Dust & Static', album: 'After Hours', duration: 360, cover: 'from-slate-600 to-indigo-800', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
-  { id: 'tr-4', title: 'Open Road', artist: 'The Caminos', album: 'Highway One', duration: 250, cover: 'from-emerald-500 to-teal-700', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
+  { id: 'tr-4', title: 'Open Road', artist: 'The Caminos', album: 'Highway One', duration: 250, cover: 'from-emerald-500 to-teal-700', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3', trending: true },
   { id: 'tr-5', title: 'Solar Flare', artist: 'Helios Project', album: 'Surface', duration: 320, cover: 'from-orange-500 to-red-700', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3' },
   { id: 'tr-6', title: 'Coastal Drift', artist: 'Mariana Trench', album: 'Tides', duration: 280, cover: 'from-cyan-500 to-blue-700', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3' },
 ];
@@ -290,5 +315,14 @@ export function getFeatured() {
     movies: MOVIES.filter(m => m.featured),
     series: SERIES.filter(s => s.featured),
     channels: CHANNELS.filter(c => c.featured),
+  };
+}
+
+export function getTrending() {
+  return {
+    movies: MOVIES.filter(m => m.trending),
+    series: SERIES.filter(s => s.trending),
+    channels: CHANNELS.filter(c => c.trending),
+    tracks:   MUSIC.filter(t => t.trending),
   };
 }
