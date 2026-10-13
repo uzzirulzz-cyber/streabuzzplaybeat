@@ -28,7 +28,7 @@ function isAIEnabled() {
 export async function getAIRecommendations(prompt: string): Promise<AIRecommendation[]> {
   if (!isAIEnabled()) return fallbackRecommendations(prompt);
   try {
-    const res = await fetch(`${API_BASE}/v1beta/models/gemini-2.0-flash:generateContent`, {
+    const res = await fetch(`${API_BASE}/v1beta/models/gemini-2.5-flash:generateContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -36,15 +36,23 @@ export async function getAIRecommendations(prompt: string): Promise<AIRecommenda
           role: 'user',
           parts: [{ text: `You are the recommender for PlayBeat TV. Suggest 6 items the user might enjoy based on this mood or query: "${prompt}". Respond as JSON array with shape [{id,title,reason,kind}] where kind is one of movie|series|channel|track. Keep reasons under 25 words. No markdown.` }],
         }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 600 },
+        generationConfig: { temperature: 0.7, maxOutputTokens: 600, responseMimeType: 'application/json' },
       }),
     });
     if (!res.ok) return fallbackRecommendations(prompt);
     const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+    const text = (data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '').trim();
+    if (!text) return fallbackRecommendations(prompt);
+    // With responseMimeType: application/json the response is already a JSON
+    // array string, but some models still wrap in prose or markdown — handle both.
+    try {
+      if (text.startsWith('[')) return JSON.parse(text);
+    } catch { /* fall through */ }
     const match = text.match(/\[[\s\S]*\]/);
-    if (!match) return fallbackRecommendations(prompt);
-    return JSON.parse(match[0]);
+    if (match) {
+      try { return JSON.parse(match[0]); } catch { /* fall through */ }
+    }
+    return fallbackRecommendations(prompt);
   } catch {
     return fallbackRecommendations(prompt);
   }
@@ -73,12 +81,12 @@ function fallbackRecommendations(prompt: string): AIRecommendation[] {
 export async function describeTitle(kind: string, title: string): Promise<string> {
   if (!isAIEnabled()) return `${title} — a ${kind} worth your attention.`;
   try {
-    const res = await fetch(`${API_BASE}/v1beta/models/gemini-2.0-flash:generateContent`, {
+    const res = await fetch(`${API_BASE}/v1beta/models/gemini-2.5-flash:generateContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ text: `In one sentence (max 25 words), describe "${title}" (a ${kind}) for a streaming platform. No quotes, no markdown.` }]}],
-        generationConfig: { temperature: 0.5, maxOutputTokens: 80 },
+        generationConfig: { temperature: 0.5, maxOutputTokens: 80, responseMimeType: 'text/plain' },
       }),
     });
     if (!res.ok) return `${title} — a ${kind} worth your attention.`;
