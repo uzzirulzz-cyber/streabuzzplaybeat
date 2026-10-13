@@ -9,6 +9,7 @@
   "rewrites": [
     { "source": "/broadcast-player/:path*", "destination": "https://playbeat-storefront.crdbixx.workers.dev/broadcast-player/:path*" },
     { "source": "/api/storefront/:path*", "destination": "https://playbeat-storefront.crdbixx.workers.dev/api/:path*" },
+    { "source": "/api/gemini/:path*", "destination": "/api/gemini" },
     { "source": "/:path*", "destination": "/index.html" }
   ],
   "headers": [
