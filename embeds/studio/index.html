@@ -1,90 +1,24 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>PlayBeat Studio</title>
-<style>
-  :root{
-    --bg:#0a0e16; --panel:#0f1626; --card:#141d30; --card-hover:#1b2642;
-    --border:#1f2c44; --text:#e8edf6; --muted:#8fa0b8;
-    --accent:#4f8cff; --accent-soft:rgba(79,140,255,.14);
-    --ftv:#ff9f43; --radius:14px;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;height:100%}
-  body{
-    background:var(--bg); color:var(--text);
-    font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
-    display:grid; place-items:center; padding:24px;
-  }
-  .card{
-    max-width:680px; width:100%; background:var(--panel);
-    border:1px solid var(--border); border-radius:var(--radius);
-    padding:32px 28px; box-shadow:0 10px 30px rgba(0,0,0,.35);
-  }
-  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;margin-bottom:6px}
-  .brand .mark{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:8px;
-    background:var(--accent);color:#fff;font-size:13px}
-  .sub{color:var(--muted);font-size:13px;margin:0 0 22px}
-  .pill{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);
-    color:var(--accent);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:600;margin-bottom:18px}
-  h2{font-size:18px;margin:0 0 10px}
-  p{color:var(--muted);margin:0 0 14px;font-size:14px}
-  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-  .btn{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;border:none;
-    border-radius:10px;padding:10px 16px;font-weight:600;text-decoration:none;font-size:14px;cursor:pointer}
-  .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
-  code{background:var(--card);padding:2px 7px;border-radius:6px;font-size:12px;color:var(--accent)}
-  pre{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;overflow:auto;
-    font-size:12.5px;color:var(--text);margin:0}
-  .row{display:grid;gap:14px;grid-template-columns:1fr 1fr;margin-top:18px}
-  @media (max-width:600px){.row{grid-template-columns:1fr}}
-  ul{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:13px}
-  li{margin:4px 0}
-  a{color:var(--accent)}
-</style>
-</head>
-<body>
-  <section class="card">
-    <div class="brand"><span class="mark">▶</span> PlayBeat Studio</div>
-    <p class="sub">Online entertainment — movies, music, and live channels.</p>
-    <span class="pill">● Stub embed</span>
-
-    <h2>This is a placeholder page.</h2>
-    <p>
-      You're seeing this page because <code>embeds/studio/index.html</code> has not been replaced
-      with a self-hosted copy of the AI Studio export yet. Google sends frame-blocking headers
-      on <code>ai.studio/apps/…</code> URLs, so we cannot iframe the live AI Studio shell directly —
-      the iframe would render blank.
-    </p>
-
-    <div class="row">
-      <div>
-        <h2>Open the source app</h2>
-        <p>The original AI Studio Build app is still reachable in a new tab:</p>
-        <div class="actions">
-          <a class="btn" href="https://ai.studio/apps/5d188f2a-5162-4288-a32e-990a76df807a"
-             target="_blank" rel="noopener noreferrer">Open in AI Studio ↗</a>
-        </div>
-      </div>
-      <div>
-        <h2>Self-host it instead</h2>
-        <p>Replace this file with the Studio export's HTML bundle:</p>
-        <pre>app/embeds/studio/index.html</pre>
-      </div>
-    </div>
-
-    <h2 style="margin-top:24px">Before you ship</h2>
-    <ul>
-      <li><strong>API key exposure</strong> — AI Studio Build apps commonly bake a Gemini API key into the served JS. Embedding that on a public site exposes the key to every visitor. Restrict the key, or proxy the calls through a small backend.</li>
-      <li><strong>Review model-generated code</strong> — skim for remote &lt;script&gt;s, eval, unexpected domains, or telemetry.</li>
-      <li><strong>Honor PlayBeat TV doctrine</strong> — if the Studio app lists channels or streams, every entry must come from authorized sources and respect the LIVE/OFFLINE/UNVERIFIED health map.</li>
-    </ul>
-
-    <div class="actions" style="margin-top:20px">
-      <a class="btn ghost" href="#/" onclick="history.back();return false">← Back to PlayBeat TV</a>
-    </div>
-  </section>
-</body>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PlayBeat TV | Live TV, Movies, Series & Music Streaming</title>
+    <meta name="description" content="PlayBeat TV is a premium entertainment streaming platform featuring live TV channels, cinematic movies, web series, music, and enterprise admin tools." />
+    <meta property="og:title" content="PlayBeat TV | Entertainment Streaming Platform" />
+    <meta property="og:description" content="Watch Live TV, Movies, Series, and stream music in high definition on PlayBeat TV." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="./assets/index-DdjritMs.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-CbXtAM7H.js">
+    <link rel="modulepreload" crossorigin href="./assets/react-vendor-CoBsJuzX.js">
+    <link rel="modulepreload" crossorigin href="./assets/media-vendor-BPUeZg91.js">
+    <link rel="stylesheet" crossorigin href="./assets/index-vXkmFUpY.css">
+  </head>
+  <body class="bg-[#0a0c10] text-slate-100 font-['Plus_Jakarta_Sans',sans-serif] antialiased selection:bg-blue-600 selection:text-white">
+    <div id="root"></div>
+  </body>
 </html>

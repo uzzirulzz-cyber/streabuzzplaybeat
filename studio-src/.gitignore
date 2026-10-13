@@ -1,0 +1,12 @@
+# Studio build artifacts and deps
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.local
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
