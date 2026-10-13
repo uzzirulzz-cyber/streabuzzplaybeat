@@ -1476,21 +1476,51 @@ window.FREETV_CHANNELS=window.FREETV_CHANNELS||{};window.FREETV_CHANNELS["zw"]=[
     }
     if (window.Hls && window.Hls.isSupported()) {
       setStatus("Loading stream…");
-      hls = new Hls({ maxBufferLength: 20 });
+      hls = new Hls({ maxBufferLength: 20, manifestLoadingTimeOut: 10000, manifestLoadingMaxRetry: 2 });
       hls.loadSource(url);
       hls.attachMedia(video);
+      let retried = false;
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         setStatus("");
-        video.play().catch(() => setStatus("Press play to start."));
+        // try autoplay muted first (browser policy), then unmute if it works
+        video.muted = true;
+        video.play().then(() => {
+          // autoplay succeeded muted — leave it; user can unmute via controls
+        }).catch(() => setStatus("Press play to start."));
       });
       hls.on(Hls.Events.ERROR, (_, data) => {
         if (data.fatal) {
-          setStatus("Stream error: " + data.details + " — it may be offline or geo-restricted.");
+          const reason = data.details || data.type || "unknown error";
+          // try to recover once for network/media errors
+          if (!retried && (data.type === Hls.ErrorTypes.NETWORK_ERROR || data.type === Hls.ErrorTypes.MEDIA_ERROR)) {
+            retried = true;
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+              setStatus("Network error — retrying…");
+              hls.startLoad();
+              return;
+            }
+            if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+              setStatus("Media error — recovering…");
+              hls.recoverMedia();
+              return;
+            }
+          }
+          // surface the failure with a clear fallback + try-a-demo option
+          showFallback(
+            "This stream is offline, geo-restricted, or the URL has changed. " +
+            "Most catalog entries are community-maintained and can disappear at any time. " +
+            "Try one of the guaranteed-live demo channels instead:",
+            "Try a demo channel ↗");
+          $("#player-fallback-btn").onclick = () => {
+            const demo = DEMO_CHANNELS[Math.floor(Math.random() * DEMO_CHANNELS.length)];
+            openPlayer(demo);
+          };
         }
       });
     } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
       video.src = url;
-      video.play().catch(() => {});
+      video.muted = true;
+      video.play().catch(() => setStatus("Press play to start."));
       video.addEventListener("error", () =>
         setStatus("The browser could not open this stream (offline or geo-restricted)."), { once: true });
     } else {
@@ -1656,6 +1686,16 @@ window.FREETV_CHANNELS=window.FREETV_CHANNELS||{};window.FREETV_CHANNELS["zw"]=[
     series:        { title: "TV Series & Shows",       sub: "Series, shows, and entertainment channels.",  target: 0,  lang: "",   groupHint: "Series" },
   };
 
+  // Public test streams that are always online — used as a "guaranteed
+  // working" rail at the top of #/live and as a fallback when a catalog
+  // stream fails to load (manifestLoadError, geo-block, etc.).
+  const DEMO_CHANNELS = [
+    { n: "Big Buck Bunny Live", r: "Big Buck Bunny (1080p)", u: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", g: "Demo · Movies", q: "1080p", s: "ftv", t: ["demo","live"], c: "us", l: "" },
+    { n: "Tears of Steel Live", r: "Tears of Steel (1080p)", u: "https://test-streams.mux.dev/test_001/stream.m3u8", g: "Demo · Sci-Fi", q: "1080p", s: "ftv", t: ["demo","live"], c: "nl", l: "" },
+    { n: "Apple Bipbop Reference", r: "Apple bipbop advanced (1080p)", u: "https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/master.m3u8", g: "Demo · Reference", q: "1080p", s: "ftv", t: ["demo","reference"], c: "us", l: "" },
+    { n: "Mux Test Pattern", r: "Mux hosted test pattern (1080p)", u: "https://stream.mux.com/maVDsVZciZy4SbiZynfSe01f8c7VU02d00cTTcTcD007oYzgHxHZc00LrKykrhfICBTtsQyvDSV.m3u8", g: "Demo · Pattern", q: "1080p", s: "ftv", t: ["demo","pattern"], c: "us", l: "" },
+  ];
+
   function matchesCategoryView(ch, slug, cfg) {
     if (!ch) return false;
     const g = (ch.g || "").toLowerCase();
@@ -1701,6 +1741,20 @@ window.FREETV_CHANNELS=window.FREETV_CHANNELS||{};window.FREETV_CHANNELS["zw"]=[
     copyBtn.id = "cat-copy";
     header.append(copyBtn);
     view.replaceChildren(header);
+
+    // For the Live page: prepend a "Guaranteed working" rail of test streams.
+    // The aggregated 20k-channel catalog has a high dead-stream rate (channels
+    // go offline, get geo-blocked, or change URLs constantly). These public
+    // test streams are always up and give the user immediate playback so the
+    // page never looks empty.
+    if (slug === "live") {
+      const demoSec = el("section", "section");
+      demoSec.append(el("h2", null, "Guaranteed live · always-on test streams"));
+      const demoGrid = el("div", "card-grid");
+      for (const dc of DEMO_CHANNELS) demoGrid.append(channelCard(dc));
+      demoSec.append(demoGrid);
+      view.append(demoSec);
+    }
 
     const filterBar = el("div", "list-filter");
     const input = document.createElement("input");
