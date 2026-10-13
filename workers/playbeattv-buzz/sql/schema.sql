@@ -127,3 +127,19 @@ CREATE TABLE IF NOT EXISTS platform_health (
   error       TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_platform_health_recent ON platform_health(platform, endpoint, checked_at DESC);
+
+-- ─────────────────────────────────────────────────────────────────────
+-- assets — posters, artwork, thumbnails. Stored in D1 (no R2 dependency).
+-- Binary content is base64-encoded TEXT. SVGs are stored as plain TEXT.
+-- The Worker reads from this table first; if the asset_key isn't found,
+-- it falls back to a deterministic SVG gradient generated from the key
+-- hash (so the UI never shows broken images even when the table is empty).
+-- ─────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS assets (
+  asset_key   TEXT PRIMARY KEY,                            -- e.g. 'poster/mv-001.svg' or 'logo/sr-001.png'
+  mime_type   TEXT NOT NULL DEFAULT 'image/svg+xml',
+  content     TEXT NOT NULL,                               -- SVG text or base64-encoded binary
+  encoding    TEXT NOT NULL DEFAULT 'utf-8',                -- 'utf-8' for SVG/text, 'base64' for binary
+  updated_at  TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_assets_key ON assets(asset_key);

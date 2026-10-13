@@ -13,8 +13,9 @@ so they point at the Worker code in `workers/playbeattv-buzz/`.
 - ✅ Storefront integration: `#/app/premium` and `#/admin/monitoring` routes live on Vercel
 - ✅ Studio app: multi-source failover VideoPlayer + Trending rail + Monitoring dashboard
 - ✅ Catalog schema extends the existing `playbeat-live-catalog` D1 database shape (catalog_channels + epg_programs reused)
+- ✅ **No R2 dependency** — assets stored in D1 `assets` table as TEXT (SVG) or base64-encoded TEXT (binary), with on-the-fly SVG gradient fallback
 
-## What you need to do (5 steps)
+## What you need to do (4 steps — R2 not required)
 
 ### Step 1 — Register playbeattv.buzz and add it to Cloudflare
 
@@ -27,20 +28,7 @@ so they point at the Worker code in `workers/playbeattv-buzz/`.
 4. Wait for DNS propagation (usually 5–30 minutes; Cloudflare will email
    you when the zone is active).
 
-### Step 2 — Enable R2 (optional but recommended)
-
-The Worker falls back to SVG gradient placeholders when R2 isn't bound,
-so R2 is optional for v1. To enable:
-
-1. Cloudflare dashboard → **R2 Object Storage** → **Set up R2**.
-2. Add a plan (Free tier includes 10 GB-month + 1M Class A operations).
-3. Once enabled, create the bucket:
-   ```bash
-   cd workers/playbeattv-buzz
-   npx wrangler r2 bucket create playbeattv-buzz
-   ```
-
-### Step 3 — Create the D1 database + apply schema + seed
+### Step 2 — Create the D1 database + apply schema + seed
 
 ```bash
 cd workers/playbeattv-buzz
@@ -55,7 +43,7 @@ npx wrangler d1 create playbeattv-buzz
 npx wrangler d1 execute playbeattv-buzz --file=./sql/schema.sql
 npx wrangler d1 execute playbeattv-buzz --file=./sql/seed.sql
 
-# Sanity check — should show 7 tables
+# Sanity check — should show 8 tables
 npx wrangler d1 execute playbeattv-buzz --command "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'"
 ```
 
@@ -68,9 +56,10 @@ stream_health
 stream_sources
 trending
 watch_history
+assets
 ```
 
-### Step 4 — Deploy the Worker
+### Step 3 — Deploy the Worker
 
 ```bash
 cd workers/playbeattv-buzz
@@ -91,7 +80,7 @@ The Worker will be live at:
 - `https://stream.playbeattv.buzz`
 - `https://assets.playbeattv.buzz`
 
-### Step 5 — Set the STREAM_TOKEN secret (optional)
+### Step 4 — Set the STREAM_TOKEN secret (optional)
 
 If you want to gate the stream proxy so only your storefront can call it:
 
@@ -108,7 +97,7 @@ existing `playbeat-storefront` Worker behavior on `playbeat.live`).
 
 ## Verifying the deployment
 
-After all 5 steps:
+After all 4 steps:
 
 ```bash
 # API health
@@ -123,7 +112,7 @@ curl https://api.playbeattv.buzz/catalog?kind=movie
 curl https://api.playbeattv.buzz/trending?window=daily
 # → {"window":"daily","items":[…]}
 
-# Stream playback — returns the m3u8 manifest
+# Stream playback — returns the m3u8 manifest (rewritten through Worker)
 curl https://stream.playbeattv.buzz/play/mv-001
 # → #EXTM3U ...
 
@@ -131,9 +120,17 @@ curl https://stream.playbeattv.buzz/play/mv-001
 curl https://stream.playbeattv.buzz/health/mv-001
 # → {"item_id":"mv-001","status":"alive","latency_ms":89,"sources":2}
 
-# Asset placeholder (deterministic SVG gradient)
-curl https://assets.playbeattv.buzz/poster/orange-500/BB.svg
+# Asset from D1 (sample poster stored as SVG)
+curl https://assets.playbeattv.buzz/poster/mv-001.svg
 # → <svg>...</svg>
+
+# Asset fallback (deterministic gradient, no D1 entry needed)
+curl https://assets.playbeattv.buzz/poster/unknown-item.svg
+# → <svg>...</svg>  (generated on the fly)
+
+# Asset endpoint info
+curl https://assets.playbeattv.buzz/
+# → {"service":"playbeattv-buzz-assets","storage":"D1 (no R2 dependency)",...}
 
 # Monitoring endpoint
 curl https://api.playbeattv.buzz/monitoring
@@ -156,10 +153,14 @@ unreachable.
                 │  api.playbeattv.buzz     ──┐                         │
                 │  stream.playbeattv.buzz   ──┼──> playbeattv-buzz     │
                 │  assets.playbeattv.buzz   ──┘    Worker              │
-                │                                  │  │  │              │
-                │                                  │  │  └──> R2 bucket │
-                │                                  │  └────> D1 db     │
-                │                                  └───────> upstream   │
+                │                                  │  │                │
+                │                                  │  └──> D1 db       │
+                │                                  │     ├─ catalog    │
+                │                                  │     ├─ stream_links│
+                │                                  │     ├─ assets     │
+                │                                  │     ├─ health     │
+                │                                  │     └─ trending  │
+                │                                  └──────> upstream   │
                 │                                          broadcaster  │
                 │  Cron trigger (every 5 min) ──> runHealthChecks      │
                 │                                          │              │
@@ -179,6 +180,15 @@ unreachable.
                 │  #/admin/monitoring → iframe → Studio monitoring       │
                 └───────────────────────────────────────────────────────┘
 ```
+
+**No R2 dependency** — all persistent state lives in D1:
+- Catalog (content_items, episodes)
+- Stream links (stream_sources — primary + backup URLs)
+- Assets (assets table — SVG posters, base64-encoded binary)
+- Trending (trending table — refreshed by cron)
+- Watch history (watch_history table)
+- Stream health (stream_health table)
+- Cross-platform monitoring (platform_health table)
 
 ## Cross-platform monitoring
 
@@ -200,10 +210,10 @@ mock with the correct shape so you can verify the UI works end-to-end.
 - **Vercel Hobby**: free for the storefront (already deployed).
 - **Cloudflare Workers Free**: 100,000 requests/day — plenty for v1.
 - **Cloudflare D1 Free**: 5 GB storage + 5M rows read/day — the seed
-  uses ~38 rows, leaves 99.999% headroom.
-- **Cloudflare R2 Free**: 10 GB storage + 1M Class A ops/month — the
-  SVG placeholders use ~0 bytes of R2, real posters would fit easily.
+  uses ~40 rows across 8 tables, leaves 99.999% headroom. SVG posters
+  are ~600 bytes each, so even 10,000 assets = ~6 MB.
 - **Cloudflare DNS**: free, unlimited queries.
 - **Cron Triggers**: free, up to 5 per Worker.
+- **R2**: not required.
 
 Total additional monthly cost for PlayBeatTV.buzz on the Free tier: $0.

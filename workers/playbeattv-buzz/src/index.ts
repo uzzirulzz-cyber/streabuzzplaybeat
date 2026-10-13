@@ -4,16 +4,16 @@
  * Routes by hostname:
  *   api.playbeattv.buzz/*     → catalog API (D1 queries, JSON)
  *   stream.playbeattv.buzz/*  → authorized stream proxy with backup failover
- *   assets.playbeattv.buzz/*  → R2 CDN (posters, artwork, thumbnails)
+ *   assets.playbeattv.buzz/*  → asset CDN (reads from D1, SVG fallback)
  *
- * The same Worker is also mounted on the *.workers.dev subdomain for
- * testing before the custom domains are wired up. The route decision is
- * made by inspecting the Host header so the deployment works identically
- * in both environments.
+ * All persistent state lives in D1 — no R2 dependency. Assets (posters,
+ * artwork, thumbnails) are stored in the `assets` table as TEXT (SVG)
+ * or base64-encoded TEXT (binary). The Worker reads from there first,
+ * then falls back to a deterministic on-the-fly SVG gradient when the
+ * requested key isn't in the table.
  *
  * Bindings (set in wrangler.toml):
- *   DB    — D1 database (catalog)
- *   ASSETS — R2 bucket (posters, artwork, thumbnails)
+ *   DB    — D1 database (catalog + assets + health)
  *
  * Secrets (set with `wrangler secret put`):
  *   STREAM_TOKEN  — bearer token the storefront sends on /stream/* calls
@@ -29,7 +29,6 @@
 
 export interface Env {
   DB: D1Database;
-  ASSETS: R2Bucket;
   STREAM_TOKEN?: string;
 }
 
@@ -367,34 +366,46 @@ async function probeItemHealth(env: Env, itemId: string): Promise<Response> {
 
 // ─────────────────────────────────────────────────────────────────────
 // Assets handler — assets.playbeattv.buzz
-// Serves posters/artwork/thumbnails from R2. If R2 isn't enabled (yet),
-// falls back to a deterministic gradient SVG placeholder so the UI
-// never shows broken images.
+// Serves posters/artwork/thumbnails from the D1 `assets` table.
+// If the asset_key isn't found in D1, falls back to a deterministic
+// gradient SVG placeholder so the UI never shows broken images — even
+// when the table is empty or a specific key hasn't been uploaded yet.
 // ─────────────────────────────────────────────────────────────────────
 async function assetsHandler(req: Request, env: Env, url: URL): Promise<Response> {
   if (req.method === 'OPTIONS') return cors(new Response(null, { status: 204 }));
 
   const key = url.pathname.replace(/^\/+/, '');
   if (!key) {
-    return json(200, { service: 'playbeattv-buzz-assets', r2: !!env.ASSETS });
+    return json(200, {
+      service: 'playbeattv-buzz-assets',
+      storage: 'D1 (no R2 dependency)',
+      hint: 'GET /poster/<item_id>.svg — serves from D1 assets table, falls back to deterministic SVG',
+    });
   }
 
-  // If R2 is bound, try to fetch from the bucket first.
-  if (env.ASSETS) {
-    const obj = await env.ASSETS.get(key);
-    if (obj) {
-      const headers = new Headers();
-      obj.writeHttpMetadata(headers);
-      headers.set('Cache-Control', 'public, max-age=86400, immutable');
-      headers.set('Access-Control-Allow-Origin', '*');
-      headers.set('X-Content-Type-Options', 'nosniff');
-      return new Response(obj.body, { headers });
-    }
+  // Try D1 first. The assets table stores SVG as TEXT (utf-8) and binary
+  // posters as base64-encoded TEXT.
+  const asset: any = await env.DB.prepare(
+    `SELECT mime_type, content, encoding FROM assets WHERE asset_key = ?`
+  ).bind(key).first();
+
+  if (asset) {
+    const body = asset.encoding === 'base64'
+      ? Uint8Array.from(atob(asset.content), c => c.charCodeAt(0))
+      : asset.content;
+    return new Response(body as BodyInit, {
+      headers: {
+        'Content-Type': asset.mime_type,
+        'Cache-Control': 'public, max-age=86400, immutable',
+        'Access-Control-Allow-Origin': '*',
+        'X-Content-Type-Options': 'nosniff',
+      },
+    });
   }
 
-  // Fallback: gradient SVG placeholder. The "key" can encode a hue and
-  // initials (e.g., /poster/orange-500/Bi.svg) so each title gets a
-  // deterministic but distinct artwork.
+  // Fallback: deterministic gradient SVG placeholder. The "key" can
+  // encode a hue and initials (e.g., /poster/orange-500/Bi.svg) so each
+  // title gets a deterministic but distinct artwork.
   const hue = hashHue(key);
   const initials = key.replace(/[^a-zA-Z]/g, '').slice(0, 2).toUpperCase() || 'PB';
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="600" viewBox="0 0 400 600">

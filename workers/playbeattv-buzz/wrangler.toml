@@ -3,9 +3,10 @@ main = "src/index.ts"
 compatibility_date = "2025-01-01"
 account_id = "1f230ccf421d89de0f68562da95f005d"
 
-# Bindings — set the database + bucket names to match your account.
+# All persistent state lives in D1 — no R2 binding needed. Assets
+# (posters, artwork, thumbnails) are stored in the D1 `assets` table
+# as TEXT (SVG) or base64-encoded TEXT (binary).
 # Create the D1 db first:  wrangler d1 create playbeattv-buzz
-# Create the R2 bucket:    wrangler r2 bucket create playbeattv-buzz
 # Then run the schema + seed:
 #   wrangler d1 execute playbeattv-buzz --file=./sql/schema.sql
 #   wrangler d1 execute playbeattv-buzz --file=./sql/seed.sql
@@ -14,10 +15,6 @@ account_id = "1f230ccf421d89de0f68562da95f005d"
 binding = "DB"
 database_name = "playbeattv-buzz"
 database_id = "REPLACE_WITH_D1_UUID"  # filled in by `wrangler d1 create`
-
-[[r2_buckets]]
-binding = "ASSETS"
-bucket_name = "playbeattv-buzz"
 
 # Scheduled trigger — every 5 minutes, run stream health checks.
 [triggers]
