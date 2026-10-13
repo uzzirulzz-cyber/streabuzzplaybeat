@@ -4,7 +4,7 @@
   "buildCommand": null,
   "installCommand": null,
   "outputDirectory": ".",
-  "cleanUrls": true,
+  "cleanUrls": false,
   "trailingSlash": false,
   "rewrites": [
     { "source": "/broadcast-player/:path*", "destination": "https://playbeat-storefront.crdbixx.workers.dev/broadcast-player/:path*" },

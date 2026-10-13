@@ -64,7 +64,7 @@ export default async function handler(req) {
     return new Response(null, { status: 204, headers: corsHeaders() });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = (globalThis as any).process?.env?.GEMINI_API_KEY;
   if (!apiKey) {
     return json(500, {
       error: "GEMINI_API_KEY is not set. Add it in Vercel Environment Variables.",
@@ -85,7 +85,7 @@ export default async function handler(req) {
   const upstreamUrl = GOOGLE_AI_BASE + upstreamPath + (url.search || "");
 
   // forward
-  const init = {
+  const init: RequestInit = {
     method: req.method,
     headers: {
       "Content-Type": "application/json",

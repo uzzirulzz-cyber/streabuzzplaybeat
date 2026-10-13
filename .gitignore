@@ -24,3 +24,4 @@ npm-debug.log*
 
 # the original AI Studio export bundle — drop your real one in
 # embeds/studio/.gitkeep would go here if needed
+.vercel
