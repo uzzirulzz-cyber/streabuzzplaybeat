@@ -1768,9 +1768,10 @@ window.FREETV_CHANNELS=window.FREETV_CHANNELS||{};window.FREETV_CHANNELS["zw"]=[
     const countEl = el("span", "muted small");
     countEl.id = "cat-count";
     filterBar.append(chips, countEl);
-    view.append(filterBar, el("div", "card-grid"));
+    const grid = el("div", "card-grid");
+    grid.id = "cat-grid";
+    view.append(filterBar, grid);
 
-    const grid = $("#view .card-grid");
     const all = await ensureChannels("__all");
 
     // Sort live to top, then alphabetical
